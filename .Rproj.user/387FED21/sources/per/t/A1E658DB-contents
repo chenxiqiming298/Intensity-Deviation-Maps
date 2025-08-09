@@ -1,0 +1,82 @@
+library(readxl)
+library(ggplot2)
+library(tidyr)
+
+intensity <- read_xlsx("category.xlsx",sheet = "intensity")
+deviation <- read_xlsx("category.xlsx",sheet = "deviation")
+
+data <- pivot_longer(
+  intensity, cols = 1:4, #读取第1-4列，因为数值存储在第1-4列
+  names_to = "interval", # 设置列名
+  values_to = "intensity")#设置数值列名
+
+data$deviation <- pivot_longer(
+  deviation, cols = 1:4, #解析同上
+  values_to = "deviation")$deviation #最后的参数是将结果导入data中
+
+
+min <- min(data$deviation)
+max <- max(data$deviation)
+
+#讲大小改为离散数值！！！！！！！！
+data$intensity <- factor(data$intensity)
+
+color_scale <- 
+  scale_color_gradientn(colors = c("#212c5f","#d1eaf8","#ffebee", "#ff6a46"),
+                        values = scales::rescale(c(min, -0.01,
+                                                   0.01,max)),
+                        limits = c(min, max))
+
+p2 <- ggplot(data = data)+
+  geom_hline(yintercept = c(3.5),
+             color = "grey60",
+             linewidth = 0.5) + #设置水平背景线 
+  geom_hline(yintercept = c(1.5,2.5,4.5,5.5),
+             color = "grey60",
+             linewidth = 0.5,
+             linetype = "dashed") + #设置水平背景线
+  geom_vline(xintercept = c(1.5,2.5,3.5,4.5),
+             color="grey60",
+             linewidth=0.5,
+             linetype = "dashed") + #添加垂直分隔线
+  geom_point(mapping = aes(x = interval,
+                           y = ID, 
+                           size = intensity,
+                           color = deviation)) + #画大小不同的点
+  geom_point(mapping = aes(x = interval,
+                           y = ID, 
+                           size = intensity,
+                           color = deviation),
+             colour = "black",
+             shape = 21) + #给点加上黑色轮廓
+  color_scale+
+  scale_size_manual(values = c("1"=4,"2"=6,"3"=8,"4"=10))+
+  scale_x_discrete(position = "top",expand = c(0.125,0.125))  +  #设置x轴
+  scale_y_continuous(breaks = c(1,2,3,4,5,6), #设置y轴标签断点位置
+                     labels = c("Region3","Region2","Region1", 
+                                "Region3","Region2","Region1"),
+                     limit = c(0.75,6.25),
+                     position = "right") +#设置Y轴标签，可自行调整#设置每个位置所对应的标签
+  labs(x = NULL, y = NULL) +  # 取消X轴和Y轴标题
+  theme(panel.background = element_rect(fill = "white"),
+        panel.border = element_rect(fill = NA,
+                                    color = "black",
+                                    linewidth = 1 ), #设置边框
+        axis.text.y = element_text(angle = 0, vjust = 0.5, hjust = 0.5),
+        axis.text.x = element_text(angle = 45, vjust = 0, hjust = 0),
+        axis.text = element_text(size = 12,
+                                 color = "black"),
+        #设置坐标轴标题字体的颜色、大小和字体
+        axis.ticks.x = element_line(color = "grey40",
+                                    linewidth = 0.5), 
+        axis.ticks.y = element_line(color = "grey40",
+                                    linewidth = 0.5), #设置刻度线的颜色和大小
+        axis.ticks.length.x = unit(4,"pt"), #设置x轴刻度线的长度
+        axis.ticks.length.y = unit(5,"pt"), #设置y轴刻度线的长度
+        plot.margin = margin(20,30,20,30), #设置图的边距
+        legend.position = 'right'
+  )
+
+pdf("category level.pdf",width = 4.7,height = 4.5)
+print(p2)
+dev.off()
