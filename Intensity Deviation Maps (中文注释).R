@@ -1,4 +1,4 @@
-#安装包
+#安装包 
 install.packages("tidyr", "ggplot2", "classInt", "openxlsx")
 
 #加载包
@@ -142,3 +142,4 @@ p1 <- ggplot(data = data)+
 pdf("Intensity Deviation Maps.pdf",width = 7.8,height = 5)
 print(p1)
 dev.off()
+
